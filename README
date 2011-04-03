@@ -1,0 +1,28 @@
+Whitelistdb.py and whitelist.py are a tiny set of scripts for maintaining a phone number whitelist for use with asterisk.
+
+I have the following section in my extensions.conf
+
+[pstn]
+exten => 1000,1,Verbose(Receiving ${CALLERID(num)}) 
+exten => 1000,n,AGI(whitelist.py,${CALLERID(num)})
+exten => 1000,n,GotoIf($["${ringthrough}" = "1"]?allowed:notallowed)
+exten => 1000,n(allowed),Verbose(Phone number ${CALLERID(num)} allowed)
+exten => 1000,n,Dial(SIP/line1, 30)
+exten => 1000,n,Voicemail(1@default,u)
+exten => 1000,n,Hangup()
+exten => 1000,n(notallowed),Verbose(Phone number ${CALLERID(num)} not allowed)
+exten => 1000,n,Wait(1)
+exten => 1000,n,Background(/var/lib/asterisk/sounds/custom/unrecognized2)
+exten => 1000,n,WaitExten()
+exten => 1000,n,Hangup()
+exten => 1,1,Voicemail(1@default,s)
+exten => 1,n,Hangup()
+exten => 2,1,Dial(SIP/line1, 30)
+exten => 2,n,Voicemail(1@default,u)
+exten => 2,n,Hangup()
+exten => 99,1,VoiceMailMain(1@default)
+
+
+It asks the whitelist.py agi script if the number is in the database.  If it is, it lets the number through.  Otherwise it plays the caller a message saying, "We don't recognize your number, press 1 to leave a voicemail, 2 to ring through."  You can do whatever you like, though :)
+
+The whitelisdb.py script requires sqlalchemy and the whitelist.py script requires the AGI stuff from asterisk.
